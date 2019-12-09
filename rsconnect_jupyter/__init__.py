@@ -45,7 +45,7 @@ def md5(s):
     return h.hexdigest()
 
 
-def verify_server(data, handler):
+def verify_server(data, contents_manager, log):
     server_address = data['server_address']
     api_key = data['api_key']
     disable_tls_check = data['disable_tls_check']
@@ -80,7 +80,7 @@ def verify_server(data, handler):
             raise web.HTTPError(401, u'Unable to verify the provided API key')
 
 
-def app_search(data, handler):
+def app_search(data, contents_manager, log):
     uri = urlparse(data['server_address'])
     api_key = data['api_key']
     title = data['notebook_title']
@@ -95,7 +95,7 @@ def app_search(data, handler):
     return retval
 
 
-def deploy(data, handler):
+def deploy(data, contents_manager, log):
     uri = urlparse(data['server_address'])
     app_id = data.get('app_id')
     nb_title = data['notebook_title']
@@ -108,21 +108,21 @@ def deploy(data, handler):
     cadata = data.get('cadata', None)
     extra_files = data.get('files', [])
 
-    model = handler.contents_manager.get(path=nb_path)
+    model = contents_manager.get(path=nb_path)
     if model['type'] != 'notebook':
         # not a notebook
         raise web.HTTPError(400, u"Not a notebook: %s" % nb_path)
 
-    if not hasattr(handler.contents_manager, '_get_os_path'):
+    if not hasattr(contents_manager, '_get_os_path'):
         raise web.HTTPError(400, u"Notebook does not live on a mounted filesystem")
 
-    os_path = handler.contents_manager._get_os_path(nb_path)
+    os_path = contents_manager._get_os_path(nb_path)
 
     if app_mode == 'static':
         try:
             bundle_file = bundle.make_notebook_html_bundle(os_path, sys.executable)
         except Exception as exc:
-            handler.log.exception('Bundle creation failed')
+            log.exception('Bundle creation failed')
             raise web.HTTPError(500, u"Bundle creation failed: %s" % exc)
     elif app_mode == 'jupyter-static':
         if not environment:
@@ -131,7 +131,7 @@ def deploy(data, handler):
         try:
             bundle_file = bundle.make_notebook_source_bundle(os_path, environment, extra_files)
         except Exception as exc:
-            handler.log.exception('Bundle creation failed')
+            log.exception('Bundle creation failed')
             raise web.HTTPError(500, u"Bundle creation failed: %s" % exc)
     else:
         raise web.HTTPError(400, 'Invalid app_mode: %s, must be "static" or "jupyter-static"' % app_mode)
@@ -144,7 +144,7 @@ def deploy(data, handler):
     return retval
 
 
-def app_get(data, handler):
+def app_get(data, contents_manager, log):
     uri = urlparse(data['server_address'])
     api_key = data['api_key']
     app_id = data['app_id']
@@ -158,7 +158,7 @@ def app_get(data, handler):
     return retval
     
 
-def get_log(data, handler):
+def get_log(data, contents_manager, log):
     uri = urlparse(data['server_address'])
     api_key = data['api_key']
     task_id = data['task_id']
@@ -174,7 +174,7 @@ def get_log(data, handler):
     return retval
 
 
-def app_config(data, handler):
+def app_config(data, contents_manager, log):
     uri = urlparse(data['server_address'])
     api_key = data['api_key']
     app_id = data['app_id']
@@ -188,11 +188,11 @@ def app_config(data, handler):
     return retval
 
 
-def write_manifest(data, handler):
+def write_manifest(data, contents_manager, log):
     environment = data['environment']
     nb_path = unquote_plus(data['notebook_path'].strip('/'))
     relative_dir = os.path.dirname(nb_path)
-    os_path = handler.contents_manager._get_os_path(nb_path)
+    os_path = contents_manager._get_os_path(nb_path)
     output_dir = os.path.dirname(os_path)
     nb_name = os.path.basename(os_path)
     created, skipped = bundle.write_manifest(relative_dir, nb_name, environment, output_dir)
@@ -219,7 +219,7 @@ class EndpointHandler(APIHandler):
         if handler is None:
             raise web.HTTPError(404)
 
-        self.finish(json.dumps(handler(data, self)))
+        self.finish(json.dumps(handler(data, self.contents_manager, self.log)))
 
 
 def load_jupyter_server_extension(nb_app):
