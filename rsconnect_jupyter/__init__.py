@@ -69,14 +69,15 @@ def verify_server(data, contents_manager, log):
         raise web.HTTPError(400, u'Unable to verify that the provided server is running RStudio Connect: %s' % err)
     if canonical_address is not None:
         uri = urlparse(canonical_address)
-        if api.verify_api_key(uri, api_key, disable_tls_check, cadata):
+        try:
+            api.verify_api_key(uri, api_key, disable_tls_check, cadata)
             address_hash = md5(server_address)
             return {
                 'status': 'Provided server is running RStudio Connect',
                 'address_hash': address_hash,
                 'server_address': canonical_address,
             }
-        else:
+        except api.RSConnectException:
             raise web.HTTPError(401, u'Unable to verify the provided API key')
 
 
@@ -137,7 +138,8 @@ def deploy(data, contents_manager, log):
         raise web.HTTPError(400, 'Invalid app_mode: %s, must be "static" or "jupyter-static"' % app_mode)
 
     try:
-        retval = api.deploy(uri, api_key, app_id, nb_name, nb_title, bundle_file, disable_tls_check, cadata)
+        with api.RSConnect(uri, api_key, None, disable_tls_check, cadata) as api_client:
+            retval = api_client.deploy(app_id, nb_name, nb_title, bundle_file)
     except api.RSConnectException as exc:
         raise web.HTTPError(400, exc.message)
 
@@ -152,7 +154,8 @@ def app_get(data, contents_manager, log):
     cadata = data.get('cadata', None)
 
     try:
-        retval = api.app_get(uri, api_key, app_id, disable_tls_check, cadata)
+        with api.RSConnect(uri, api_key, None, disable_tls_check, cadata) as api_client:
+            retval = api_client.app_get(app_id)
     except api.RSConnectException as exc:
         raise web.HTTPError(400, exc.message)
     return retval
@@ -168,7 +171,8 @@ def get_log(data, contents_manager, log):
     cadata = data.get('cadata', None)
 
     try:
-        retval = api.task_get(uri, api_key, task_id, last_status, cookies, disable_tls_check, cadata)
+        with api.RSConnect(uri, api_key, cookies, disable_tls_check, cadata) as api_client:
+            retval = api_client.task_get(task_id, last_status)
     except api.RSConnectException as exc:
         raise web.HTTPError(400, exc.message)
     return retval
@@ -182,7 +186,8 @@ def app_config(data, contents_manager, log):
     cadata = data.get('cadata', None)
 
     try:
-        retval = api.app_config(uri, api_key, app_id, disable_tls_check, cadata)
+        with api.RSConnect(uri, api_key, None, disable_tls_check, cadata) as api_client:
+            retval = api_client.app_config(app_id)
     except api.RSConnectException as exc:
         raise web.HTTPError(400, exc.message)
     return retval
