@@ -24,7 +24,7 @@ from rsconnect.bundle import (
     make_notebook_source_bundle,
     write_manifest,
 )
-from rsconnect.environment import Environment
+from rsconnect.environment import MakeEnvironment
 from rsconnect.http_support import CookieJar
 
 from ssl import SSLError
@@ -171,7 +171,7 @@ class EndpointHandler(APIHandler):
                     raise web.HTTPError(400, "environment is required for jupyter-static app_mode")
 
                 try:
-                    bundle = make_notebook_source_bundle(os_path, Environment(**environment_dict), extra_files)
+                    bundle = make_notebook_source_bundle(os_path, MakeEnvironment(**environment_dict), extra_files)
                 except Exception as exc:
                     self.log.exception("Bundle creation failed")
                     raise web.HTTPError(500, u"Bundle creation failed: %s" % exc)
@@ -251,7 +251,7 @@ class EndpointHandler(APIHandler):
             os_path = self.contents_manager._get_os_path(nb_path)
             output_dir = dirname(os_path)
             nb_name = os.path.basename(os_path)
-            created, skipped = write_manifest(relative_dir, nb_name, Environment(**environment_dict), output_dir)
+            created, skipped = write_manifest(relative_dir, nb_name, MakeEnvironment(**environment_dict), output_dir)
             self.finish(json.dumps({"created": created, "skipped": skipped}))
             return
 
