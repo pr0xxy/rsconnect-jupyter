@@ -1,4 +1,4 @@
-FROM python:3.6.6-alpine
+FROM python:3.7.13-alpine
 MAINTAINER RStudio Quality <qa@rstudio.com>
 
 WORKDIR /opt/work
