@@ -1,5 +1,5 @@
 # Using dated tags from https://hub.docker.com/_/ubuntu/
-FROM ubuntu:bionic-20201119
+FROM ubuntu:bionic
 MAINTAINER RStudio Connect <rsconnect@rstudio.com>
 
 # Configure apt-get to use the mirror in us-east-1 instead of the Docker default of archive.ubuntu.com
