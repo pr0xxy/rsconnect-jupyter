@@ -5,5 +5,5 @@ mkdocs-exclude==1.0.2
 markdown==3.2.1
 markdown-include==0.5.1
 pymdown-extensions==7.0
-Pygments==2.5.2
+Pygments==2.15.0
 markdown-fenced-code-tabs==1.0.5
