@@ -7,3 +7,4 @@ markdown-include==0.5.1
 pymdown-extensions==7.0
 Pygments==2.5.2
 markdown-fenced-code-tabs==1.0.5
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
