@@ -1,4 +1,4 @@
-FROM node:11.10.1
+FROM node:11.15.0
 LABEL maintainer="RStudio Connect <rsconnect@rstudio.com>"
 ARG NB_UID
 ARG NB_GID
